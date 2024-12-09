@@ -33,14 +33,19 @@ import vepub_toc
 
 #=== Exceptions ================================================================
 
-class NoEpubBufferFound(Exception): pass
+
+class NoEpubBufferFound(Exception):
+    pass
+
 
 #=== EPUB Classes ==============================================================
 
 # Context manager for EPUB class
 
+
 class Open_EPUB(object):
-    def __init__(self,vim_buffers=None):
+
+    def __init__(self, vim_buffers=None):
         """
         Open a .epub file and return a EPUB instance.
 
@@ -60,8 +65,8 @@ class Open_EPUB(object):
                 buff = buffer.name.decode("utf8")
 
                 if buff.endswith(".epub"):
-                  epub_master_buffer = buff
-                  break
+                    epub_master_buffer = buff
+                    break
 
             if epub_master_buffer:
                 self.valid = True
@@ -71,10 +76,11 @@ class Open_EPUB(object):
                 self.epub.contents_buffer = epub_master_buffer
 
                 self.epub.original_epub["path"] = path(
-                        to_unicode_or_bust(epub_master_buffer)
-                )
-                self.epub.original_epub["zip_object"] = zipfile.ZipFile(epub_master_buffer)
-                self.epub.original_epub["zip_files"] = self.epub.original_epub["zip_object"].namelist()
+                    to_unicode_or_bust(epub_master_buffer))
+                self.epub.original_epub["zip_object"] = zipfile.ZipFile(
+                    epub_master_buffer)
+                self.epub.original_epub["zip_files"] = self.epub.original_epub[
+                    "zip_object"].namelist()
 
             else:
                 # No epub file found
@@ -85,10 +91,12 @@ class Open_EPUB(object):
             return self.epub
 
         else:
-            print "No EPUB file buffer found."
+            print("No EPUB file buffer found.")
             raise NoEpubBufferFound()
 
-    def __exit__(self,type,value,traceback): pass
+    def __exit__(self, type, value, traceback):
+        pass
+
 
 class EPUB:
     """
@@ -100,10 +108,10 @@ class EPUB:
 
     def __init__(self):
         self.original_epub = {}
-        self.temporary_epub = {"path":None,"have_dir":False}
-        self.oebps = {"used":False,"variant":""}
+        self.temporary_epub = {"path": None, "have_dir": False}
+        self.oebps = {"used": False, "variant": ""}
 
-    def open(self,vim_buffers=None):
+    def open(self, vim_buffers=None):
         """
         vim_buffers: vim.buffers from vim python module.
         """
@@ -121,8 +129,8 @@ class EPUB:
                 buff = buffer.name.decode("utf8")
 
                 if buff.endswith(".epub"):
-                  epub_master_buffer = buff
-                  break
+                    epub_master_buffer = buff
+                    break
 
             if epub_master_buffer:
                 self.valid = True
@@ -130,13 +138,14 @@ class EPUB:
                 self.epub.contents_buffer = epub_master_buffer
 
                 self.original_epub["path"] = path(
-                        to_unicode_or_bust(epub_master_buffer)
-                )
-                self.original_epub["zip_object"] = zipfile.ZipFile(epub_master_buffer)
-                self.original_epub["zip_files"] = self.original_epub["zip_object"].namelist()
+                    to_unicode_or_bust(epub_master_buffer))
+                self.original_epub["zip_object"] = zipfile.ZipFile(
+                    epub_master_buffer)
+                self.original_epub["zip_files"] = self.original_epub[
+                    "zip_object"].namelist()
 
             else:
-                print "No EPUB file buffer found."
+                print("No EPUB file buffer found.")
                 raise NoEpubBufferFound()
 
     # Basic actions methods
@@ -149,32 +158,30 @@ class EPUB:
           - extract (bool): success.
         """
         tmp_path = "{0}{2}.temp_{1}{2}".format(
-                self.original_epub["path"].dirname(),
-                self.original_epub["path"].namebase,
-                os.sep)
+            self.original_epub["path"].dirname(),
+            self.original_epub["path"].namebase, os.sep)
 
         try:
-            os.mkdir(tmp_path,0755)
+            os.mkdir(tmp_path, 0o755)
             self.temporary_epub["have_dir"] = True
-        except OSError,err:
+        except err(OSError):
             if err.errno == 17:
                 # The folder already exists
                 self.temporary_epub["have_dir"] = True
             else:
-                print err.errno,":",err.strerror
+                print(err.errno, ":", err.strerror)
 
         self.temporary_epub["path"] = tmp_path
 
         return self.temporary_epub["have_dir"]
 
-    def extract(self,extract_path=None):
+    def extract(self, extract_path=None):
         """Extract the EPUB to a temporary folder"""
 
         if extract_path is None:
             if self.temporary_epub["path"] is not None:
                 self.original_epub["zip_object"].extractall(
-                        path=self.temporary_epub["path"]
-                )
+                    path=self.temporary_epub["path"])
                 return True
 
             else:
@@ -184,7 +191,7 @@ class EPUB:
 
             return True
 
-    def guess_destination(self,filetype):
+    def guess_destination(self, filetype):
         """
         Find the appropriate location in the EPUB tree for a new file.
 
@@ -208,7 +215,7 @@ class EPUB:
             if not defined:
                 if f.startswith("OEBPS/") or f.startswith("OPS/"):
 
-                    self.oebps = {"used":True,"variant":""}
+                    self.oebps = {"used": True, "variant": ""}
 
                     make_dir = True
                     defined = True
@@ -226,22 +233,26 @@ class EPUB:
                         make_dir = False
 
                 if filetype == "image":
-                    if f.startswith("{0}/Images/".format(self.oebps["variant"])):
+                    if f.startswith("{0}/Images/".format(
+                            self.oebps["variant"])):
                         make_dir = False
 
                 if filetype == "css":
                     # Sigil variant
-                    if f.startswith("{0}/Styles/".format(self.oebps["variant"])):
+                    if f.startswith("{0}/Styles/".format(
+                            self.oebps["variant"])):
                         css_variant = "Styles"
                         make_dir = False
 
                     # EPUB standard
-                    if f.startswith("{0}/Style/".format(self.oebps["variant"])):
+                    if f.startswith("{0}/Style/".format(
+                            self.oebps["variant"])):
                         css_variant = "Style"
                         make_dir = False
 
                 if filetype == "font":
-                    if f.startswith("{0}/Fonts/".format(self.oebps["variant"])):
+                    if f.startswith("{0}/Fonts/".format(
+                            self.oebps["variant"])):
                         make_dir = False
 
                 if filetype == "misc":
@@ -261,7 +272,7 @@ class EPUB:
                 ret = "{0}/Images/".format(self.oebps["variant"])
 
             if filetype == "css":
-                ret = "{0}/{1}/".format(self.oebps["variant"],css_variant)
+                ret = "{0}/{1}/".format(self.oebps["variant"], css_variant)
 
             if filetype == "font":
                 ret = "{0}/Fonts/".format(self.oebps["variant"])
@@ -269,42 +280,37 @@ class EPUB:
             if filetype == "misc":
                 ret = "{0}/Misc/".format(self.oebps["variant"])
 
-            return ret,make_dir
+            return ret, make_dir
         else:
-            return None,None
+            return None, None
 
-    def add_media(self,raw_media_path):
+    def add_media(self, raw_media_path):
         if self.temporary_epub["have_dir"]:
 
             media_path = path(raw_media_path)
             media_name = media_path.basename()
 
-            if media_path.ext[1:].lower() in ["jpg","jpeg","png","gif"]:
+            if media_path.ext[1:].lower() in ["jpg", "jpeg", "png", "gif"]:
                 media_type = "image"
             elif media_path.ext[1:].lower() in ["css"]:
                 media_type = "css"
-            elif media_path.ext[1:].lower() in ["html","xhtml"]:
+            elif media_path.ext[1:].lower() in ["html", "xhtml"]:
                 media_type = "text"
-            elif media_path.ext[1:].lower() in ["ttf","woff","otf"]:
+            elif media_path.ext[1:].lower() in ["ttf", "woff", "otf"]:
                 media_type = "font"
-            elif media_path.ext[1:].lower() in ["mp3","mp4","ogg"]:
+            elif media_path.ext[1:].lower() in ["mp3", "mp4", "ogg"]:
                 media_type = "audio"
             else:
-                print "Unknown format:",media_path.ext[1:]
+                print("Unknown format:", media_path.ext[1:])
                 media_type = "misc"
 
             # Find the appropriate folder in the EPUB file for the new media.
-            add_in,make_dir = self.guess_destination(media_type)
+            add_in, make_dir = self.guess_destination(media_type)
 
             if make_dir:
                 try:
-                    os.mkdir(
-                        "{0}{1}{2}".format(
-                            self.temporary_epub["path"],
-                            os.sep,
-                            add_in
-                        )
-                    )
+                    os.mkdir("{0}{1}{2}".format(self.temporary_epub["path"],
+                                                os.sep, add_in))
                 except OSError:
                     pass
 
@@ -315,47 +321,43 @@ class EPUB:
 
                 valid = False
                 for mt in [
-                    "Text","Images","Style","Styles","Fonts","Misc"
-                    ]:
+                        "Text", "Images", "Style", "Styles", "Fonts", "Misc"
+                ]:
 
                     if mt in add_in:
                         valid = True
 
                 if valid:
                     in_epub_path = "{0}{1}{2}".format(
-                        self.temporary_epub["path"],
-                        add_in,
-                        media_name
-                    )
+                        self.temporary_epub["path"], add_in, media_name)
                     in_epub_oebps_path = "{0}/{1}".format(
-                        add_in.split("/")[1],
-                        media_name
-                    )
+                        add_in.split("/")[1], media_name)
 
                     if in_epub_path is not None:
-                        shutil.copy(raw_media_path,in_epub_path)
+                        shutil.copy(raw_media_path, in_epub_path)
 
                     if in_epub_path is not None:
                         # Add the media to content.opf
                         return self.epub2_append_to_opf(
-                            media_path.ext[1:].lower(),
-                            media_path,
-                            in_epub_oebps_path
-                        )
+                            media_path.ext[1:].lower(), media_path,
+                            in_epub_oebps_path)
 
-    def backup(self,filename=None):
+    def backup(self, filename=None):
         """Backup the original epub."""
 
         if filename is None:
-            backup_file = "{0}.vepub.bak".format(self.original_epub["path"].abspath())
+            backup_file = "{0}.vepub.bak".format(
+                self.original_epub["path"].abspath())
         else:
-            dirpath = os.sep.join(self.original_epub["path"].abspath().splitpath()[:-1])
-            backup_file = "{0}{1}{2}.epub.user.bak".format(dirpath,os.sep,filename)
+            dirpath = os.sep.join(
+                self.original_epub["path"].abspath().splitpath()[:-1])
+            backup_file = "{0}{1}{2}.epub.user.bak".format(
+                dirpath, os.sep, filename)
 
         if backup_file:
             self.original_epub["path"].copy(backup_file)
 
-            print "EPUB Backup in {0}.".format(backup_file)
+            print("EPUB Backup in {0}.".format(backup_file))
 
             return True
         else:
@@ -367,15 +369,18 @@ class EPUB:
         if self._have_correct_oebps_variant():
             os.chdir(self.temporary_epub["path"])
 
-            if platform.system() in ["Linux","Darwin"] or "bsd" in platform.system().lower():
+            if platform.system() in ["Linux", "Darwin"
+                                     ] or "bsd" in platform.system().lower():
                 nzip = unicode(self.original_epub["path"].basename())
             else:
                 # Windows…
                 return False
 
-            if platform.system() == "Linux" or "bsd" in platform.system().lower:
+            if platform.system() == "Linux" or "bsd" in platform.system(
+            ).lower:
                 os.popen('zip -X -Z store "{0}" mimetype'.format(nzip)).read()
-                os.popen('zip -r "{0}" META-INF/ {1}/'.format(nzip,self.oebps["variant"])).read()
+                os.popen('zip -r "{0}" META-INF/ {1}/'.format(
+                    nzip, self.oebps["variant"])).read()
                 os.popen('zip -r "{0}" *'.format(nzip))
                 return True
 
@@ -383,7 +388,8 @@ class EPUB:
                 os.system('zip -X "{0}" mimetype'.format(nzip))
                 os.system('zip -rg "{0}" META-INF -x \*.DS_Store'.format(nzip))
                 os.system('zip -rg "{0}" *'.format(nzip))
-                os.system('zip -rg "{0}" {1} -x \*.DS_Store'.format(nzip,self.oebps["variant"]))
+                os.system('zip -rg "{0}" {1} -x \*.DS_Store'.format(
+                    nzip, self.oebps["variant"]))
                 return True
 
     def move_new_and_clean(self):
@@ -393,7 +399,7 @@ class EPUB:
         old_epub = self.original_epub["path"].abspath()
 
         os.remove(old_epub)
-        shutil.move(new_epub,old_epub)
+        shutil.move(new_epub, old_epub)
 
         self.remove_temp_dir()
 
@@ -405,27 +411,28 @@ class EPUB:
 
     def _have_correct_oebps_variant(self):
         if self.oebps["variant"]:
-            if self.oebps["variant"] in ["OPS","OEBPS"]:
+            if self.oebps["variant"] in ["OPS", "OEBPS"]:
                 return True
             else:
                 return False
         else:
             self.guess_destination(None)
 
-            if self.oebps["variant"] in ["OPS","OEBPS"]:
+            if self.oebps["variant"] in ["OPS", "OEBPS"]:
                 return True
             else:
                 return False
 
     # Utils
 
-    def replace_string(self,action_field,old_string,new_string):
-        def replace(source_file,old_string,new_string):
-            with open(source_file,"r") as fi:
+    def replace_string(self, action_field, old_string, new_string):
+
+        def replace(source_file, old_string, new_string):
+            with open(source_file, "r") as fi:
                 text = fi.read()
 
                 if old_string in text:
-                    text = text.replace(old_string,new_string)
+                    text = text.replace(old_string, new_string)
 
                 return text
 
@@ -434,41 +441,41 @@ class EPUB:
         for f in files:
             file_path = None
 
-            location,make_dir = self.guess_destination("text")
+            location, make_dir = self.guess_destination("text")
 
             if location == "{0}/Text/".format(self.oebps["variant"]):
-                file_path = "{0}{1}".format(self.temporary_epub["path"],f)
+                file_path = "{0}{1}".format(self.temporary_epub["path"], f)
 
-                old_string = old_string.replace(self.oebps["variant"],"..")
-                new_string = new_string.replace(self.oebps["variant"],"..")
+                old_string = old_string.replace(self.oebps["variant"], "..")
+                new_string = new_string.replace(self.oebps["variant"], "..")
 
             if file_path is not None:
                 try:
-                    new_text = replace(file_path,old_string,new_string)
+                    new_text = replace(file_path, old_string, new_string)
 
                     os.remove(file_path)
 
-                    with open(file_path,"w") as fi:
+                    with open(file_path, "w") as fi:
                         fi.write(new_text)
-                except IOError,err:
+                except IOError, err:
                     if err.errno == 2:
                         pass
 
-    def rename_file(self,old_path,new_path):
+    def rename_file(self, old_path, new_path):
         """Rename old_path into new_path."""
 
-        old_path = "{0}{1}".format(self.temporary_epub["path"],old_path)
-        new_path = "{0}{1}".format(self.temporary_epub["path"],new_path)
+        old_path = "{0}{1}".format(self.temporary_epub["path"], old_path)
+        new_path = "{0}{1}".format(self.temporary_epub["path"], new_path)
 
         if self.temporary_epub["have_dir"]:
-            shutil.move(old_path,new_path)
+            shutil.move(old_path, new_path)
             return True
         else:
             return False
 
     # Files search
 
-    def has_file(self,file_path):
+    def has_file(self, file_path):
         """
         Check for a file in the EPUB's content.
 
@@ -482,7 +489,7 @@ class EPUB:
 
         return False
 
-    def get_current_buffer_file(self,vim,temp_dir=False):
+    def get_current_buffer_file(self, vim, temp_dir=False):
         """
         As the name of the method says.
 
@@ -494,11 +501,11 @@ class EPUB:
         fname = vim.current.buffer.name.decode("utf8").split("::")[-1]
 
         if temp_dir:
-            return "{0}{1}".format(self.temporary_epub["path"],fname)
+            return "{0}{1}".format(self.temporary_epub["path"], fname)
         else:
             return fname
 
-    def get_file(self,file_path,temp_dir=False):
+    def get_file(self, file_path, temp_dir=False):
         """
         Check for a file in the EPUB's content and return it's path.
 
@@ -510,13 +517,14 @@ class EPUB:
                 if file_path.ext[1:] in f:
                     if file_path.basename() in f.split("/")[-1]:
                         if temp_dir:
-                            return "{0}{1}".format(self.temporary_epub["path"],f)
+                            return "{0}{1}".format(self.temporary_epub["path"],
+                                                   f)
                         else:
                             return f
         else:
             return False
 
-    def get_files_by_extension(self,extension):
+    def get_files_by_extension(self, extension):
         """
         Return all files in the EPUB's content with extension extension.
 
@@ -526,7 +534,7 @@ class EPUB:
 
         filenames = []
 
-        if not isinstance(extension,list):
+        if not isinstance(extension, list):
             extension = [extension]
 
         for ext in extension:
@@ -538,7 +546,7 @@ class EPUB:
 
         return filenames
 
-    def get_files_by_extension_in_temp(self,extension):
+    def get_files_by_extension_in_temp(self, extension):
         """
         Return all files in the temporary EPUB's content with extension extension.
 
@@ -548,7 +556,7 @@ class EPUB:
 
         filenames = []
 
-        if not isinstance(extension,list):
+        if not isinstance(extension, list):
             extension = [extension]
 
         for ext in extension:
@@ -562,7 +570,7 @@ class EPUB:
 
     # EPUB 2 methods
 
-    def epub2_append_to_opf(self,filetype,media_path,ref):
+    def epub2_append_to_opf(self, filetype, media_path, ref):
         """
         Append a file to the OPF entries (manifest + spine).
 
@@ -578,30 +586,92 @@ class EPUB:
         # filetype : [mimetype, add in manifest, add in spine]
         # filetype : ["FILETYPE"] -> use another filetype
         filetypes = {
-                "ncx":{"mime":"application/x-dtbncx+xml","manifest":True,"spine":False},
-                "xhtml":{"mime":"application/xhtml+xml","manifest":True,"spine":True},
-                "html":{"mime":"text/html","manifest":True,"spine":True},
-                "ttf":{"mime":"application/x-font-ttf","manifest":True,"spine":False},
-                "woff":{"mime":"application/font-woff","manifest":True,"spine":False},
-                "otf":{"mime":"application/font-sfnt","manifest":True,"spine":False},
+            "ncx": {
+                "mime": "application/x-dtbncx+xml",
+                "manifest": True,
+                "spine": False
+            },
+            "xhtml": {
+                "mime": "application/xhtml+xml",
+                "manifest": True,
+                "spine": True
+            },
+            "html": {
+                "mime": "text/html",
+                "manifest": True,
+                "spine": True
+            },
+            "ttf": {
+                "mime": "application/x-font-ttf",
+                "manifest": True,
+                "spine": False
+            },
+            "woff": {
+                "mime": "application/font-woff",
+                "manifest": True,
+                "spine": False
+            },
+            "otf": {
+                "mime": "application/font-sfnt",
+                "manifest": True,
+                "spine": False
+            },
+            "png": {
+                "mime": "image/png",
+                "manifest": True,
+                "spine": False
+            },
+            "jpg": {
+                "mime": "image/jpg",
+                "manifest": True,
+                "spine": False
+            },
+            "gif": {
+                "mime": "image/gif",
+                "manifest": True,
+                "spine": False
+            },
+            "svg": {
+                "mime": "image/svg+xml",
+                "manifest": True,
+                "spine": False
+            },
 
-                "png":{"mime":"image/png","manifest":True,"spine":False},
-                "jpg":{"mime":"image/jpg","manifest":True,"spine":False},
-                "gif":{"mime":"image/gif","manifest":True,"spine":False},
-                "svg":{"mime":"image/svg+xml","manifest":True,"spine":False},
+            # Yes, Ogg file really have text/plain as mime
+            "ogg": {
+                "mime": "text/plain",
+                "manifest": True,
+                "spine": False
+            },
+            "css": {
+                "mime": "text/css",
+                "manifest": True,
+                "spine": False
+            },
+            "js": {
+                "mime": "text/javascript",
+                "manifest": True,
+                "spine": False
+            },
+            "mp3": {
+                "mime": "audio/mpeg",
+                "manifest": True,
+                "spine": False
+            },
+            "mp4": {
+                "mime": "audio/mp4",
+                "manifest": True,
+                "spine": False
+            },
 
-                # Yes, Ogg file really have text/plain as mime
-                "ogg":{"mime":"text/plain","manifest":True,"spine":False},
-                "css":{"mime":"text/css","manifest":True,"spine":False},
-                "js":{"mime":"text/javascript","manifest":True,"spine":False},
-
-                "mp3":{"mime":"audio/mpeg","manifest":True,"spine":False},
-                "mp4":{"mime":"audio/mp4","manifest":True,"spine":False},
-
-                # aliases
-                "jpeg":{"use":"jpg"},
-                "htm":{"use":"html"},
-                }
+            # aliases
+            "jpeg": {
+                "use": "jpg"
+            },
+            "htm": {
+                "use": "html"
+            },
+        }
         #-------------------------------------------------------------------------
 
         if "use" in filetypes[filetype]:
@@ -614,10 +684,7 @@ class EPUB:
 
         if filetype["manifest"]:
             manifest = '<item href="{0}" id="{1}" media-type="{2}" />'.format(
-                    ref,
-                    media_path.basename(),
-                    filetype["mime"]
-            )
+                ref, media_path.basename(), filetype["mime"])
         else:
             manifest = False
 
@@ -627,11 +694,12 @@ class EPUB:
             spine = False
 
         if self._have_correct_oebps_variant():
-            os.chdir("{0}{1}{2}".format(self.temporary_epub["path"],self.oebps["variant"],os.sep))
+            os.chdir("{0}{1}{2}".format(self.temporary_epub["path"],
+                                        self.oebps["variant"], os.sep))
 
             new_opf = ""
 
-            with open("content.opf","r") as opf:
+            with open("content.opf", "r") as opf:
                 for line in opf:
                     line = line.rstrip()
 
@@ -640,13 +708,13 @@ class EPUB:
 
                     if desunicode('</manifest>') in line:
                         if filetype["manifest"]:
-                            new_opf += "\n{0}{1}".format(tab_item,manifest)
+                            new_opf += "\n{0}{1}".format(tab_item, manifest)
                             new_opf += "\n</manifest>"
                         else:
                             new_opf += "\n</manifest>"
                     elif desunicode('</spine>') in line:
                         if filetype["spine"]:
-                            new_opf += "\n{0}{1}".format(tab_item,spine)
+                            new_opf += "\n{0}{1}".format(tab_item, spine)
                             new_opf += "\n</spine>"
                         else:
                             new_opf += "\n</spine>"
@@ -661,7 +729,7 @@ class EPUB:
             # Convert the damn OPF into str (not unicode)
             new_opf = new_opf.encode("utf8")
 
-            with open("content.opf","w") as opf:
+            with open("content.opf", "w") as opf:
                 opf.write(new_opf)
 
             return True
@@ -669,7 +737,7 @@ class EPUB:
         else:
             return False
 
-    def epub2_predefined_append_to_opf(self,predef):
+    def epub2_predefined_append_to_opf(self, predef):
         """
         Method for the lazy man I am.
 
@@ -683,14 +751,9 @@ class EPUB:
             if predef == "TocPage":
                 self.epub2_append_to_opf(
                     "xhtml",
-                    path(
-                        "{0}/{1}/Text/TableOfContents.xhtml".format(
-                            self.temporary_epub["path"],
-                            self.oebps["variant"]
-                        )
-                    ),
-                    "Text/TableOfContents.xhtml"
-                )
+                    path("{0}/{1}/Text/TableOfContents.xhtml".format(
+                        self.temporary_epub["path"], self.oebps["variant"])),
+                    "Text/TableOfContents.xhtml")
 
                 return True
 
@@ -700,7 +763,7 @@ class EPUB:
 
     # Table of contents methods
 
-    def _make_raw_toc_list(self,toc_list):
+    def _make_raw_toc_list(self, toc_list):
         toc = []
         current_root = None
 
@@ -722,19 +785,20 @@ class EPUB:
         return toc
 
     def make_TOC_tree(self):
-        location,make_dir = self.guess_destination("text")
+        location, make_dir = self.guess_destination("text")
 
         text_dir = None
 
         if location == "{0}/Text/".format(self.oebps["variant"]):
-            text_dir = "{0}/{1}/Text/".format(self.temporary_epub["path"],self.oebps["variant"])
+            text_dir = "{0}/{1}/Text/".format(self.temporary_epub["path"],
+                                              self.oebps["variant"])
 
         if text_dir is not None:
             text_files = []
             tf = os.listdir(text_dir)
 
             for xhtml_file in tf:
-                file_path = "{0}{1}".format(text_dir,xhtml_file)
+                file_path = "{0}{1}".format(text_dir, xhtml_file)
 
                 if os.path.isfile(file_path) and file_path.endswith(".xhtml"):
                     text_files.append(file_path)
@@ -742,19 +806,17 @@ class EPUB:
             files_tocs = []
 
             for xhtml_file in text_files:
-                xhtml_source = xhtml_file[len(self.temporary_epub["path"])+1:]
+                xhtml_source = xhtml_file[len(self.temporary_epub["path"]) +
+                                          1:]
 
                 if self.oebps["used"]:
-                    xhtml_source = xhtml_source[len(self.oebps["variant"])+1:]
+                    xhtml_source = xhtml_source[len(self.oebps["variant"]) +
+                                                1:]
 
-                with open(xhtml_file,"r") as xf:
+                with open(xhtml_file, "r") as xf:
                     parser = vepub_toc.TocParser()
                     files_tocs.extend(
-                            parser.get_struct(
-                                xf.read(),
-                                xhtml_source
-                            )
-                    )
+                        parser.get_struct(xf.read(), xhtml_source))
 
             toc = self._make_raw_toc_list(files_tocs)
 
@@ -763,9 +825,11 @@ class EPUB:
         else:
             return None
 
-    def _make_ncx(self,toc_tree):
+    def _make_ncx(self, toc_tree):
+
         def _make_navmap(toc_tree):
-            def get_navpoint(elem,nav_map):
+
+            def get_navpoint(elem, nav_map):
                 recursions = elem["level"] - 1
 
                 if recursions:
@@ -773,11 +837,11 @@ class EPUB:
                     sup_navpoint = nav_map.nav_point[-1]
 
                     while recur_done < recursions:
-                      try:
-                        sup_navpoint = sup_navpoint.nav_point[-1]
-                      except IndexError:
-                        break
-                      recur_done += 1
+                        try:
+                            sup_navpoint = sup_navpoint.nav_point[-1]
+                        except IndexError:
+                            break
+                        recur_done += 1
 
                     return sup_navpoint
                 else:
@@ -792,7 +856,7 @@ class EPUB:
                     elem["id"] = ""
 
                 if elem["id"]:
-                    source = "{0}#{1}".format(elem["source"],elem["id"])
+                    source = "{0}#{1}".format(elem["source"], elem["id"])
                 else:
                     source = elem["source"]
 
@@ -800,7 +864,7 @@ class EPUB:
                 nav_point.add_label(elem["text"])
                 nav_point.src = source
 
-                nav_master = get_navpoint(elem,nav_map)
+                nav_master = get_navpoint(elem, nav_map)
                 nav_master.add_point(nav_point)
 
                 if elem["subtitles"]:
@@ -811,7 +875,7 @@ class EPUB:
                             sub["id"] = ""
 
                         if sub["id"]:
-                            source = "{0}#{1}".format(sub["source"],sub["id"])
+                            source = "{0}#{1}".format(sub["source"], sub["id"])
                         else:
                             source = sub["source"]
 
@@ -819,7 +883,7 @@ class EPUB:
                         nav_point.add_label(sub["text"])
                         nav_point.src = source
 
-                        nav_master = get_navpoint(sub,nav_map)
+                        nav_master = get_navpoint(sub, nav_map)
                         nav_master.add_point(nav_point)
 
             return nav_map.as_xml_element().toxml()
@@ -827,19 +891,15 @@ class EPUB:
         temp_1 = "{0}tmp.xml".format(self.temporary_epub["path"])
         temp_2 = "{0}tmp2.xml".format(self.temporary_epub["path"])
 
-        with open(temp_1,"w") as tp1:
+        with open(temp_1, "w") as tp1:
             tp1.write(_make_navmap(toc_tree))
 
-        os.system(
-                "xmllint --format --recover {0} > {1}".format(
-                    temp_1,
-                    temp_2
-                )
-        )
+        os.system("xmllint --format --recover {0} > {1}".format(
+            temp_1, temp_2))
 
         navmap = ""
 
-        with open(temp_2,"r") as t:
+        with open(temp_2, "r") as t:
             xml_declaration = True
             for line in t:
                 if xml_declaration:
@@ -848,14 +908,16 @@ class EPUB:
                 else:
                     navmap += line
 
-        for xml in [temp_1,temp_2]:
+        for xml in [temp_1, temp_2]:
             os.remove(xml)
 
         return navmap
 
-    def _make_nav(self,toc_tree):
+    def _make_nav(self, toc_tree):
+
         def _make_navmap(toc_tree):
-            def get_navpoint(elem,nav_map,added):
+
+            def get_navpoint(elem, nav_map, added):
                 for litem in added:
                     if elem["level"] - 1 == litem[0]:
                         return litem[1]
@@ -874,13 +936,13 @@ class EPUB:
                 if "id" in elem:
                     nav_point.anchor = elem["id"]
 
-                nav_master = get_navpoint(elem,nav_map,added)
+                nav_master = get_navpoint(elem, nav_map, added)
                 nav_master.add_navpoint(nav_point)
 
                 if elem["level"] == 1:
-                    added = [[elem["level"],nav_point]]
+                    added = [[elem["level"], nav_point]]
                 else:
-                    added.append([elem["level"],nav_point])
+                    added.append([elem["level"], nav_point])
 
                 if elem["subtitles"]:
                     for sub in elem["subtitles"]:
@@ -893,16 +955,16 @@ class EPUB:
                         if "id" in elem:
                             nav_point.anchor = sub["id"]
 
-                        nav_master = get_navpoint(sub,nav_map,added)
+                        nav_master = get_navpoint(sub, nav_map, added)
                         nav_master.add_navpoint(nav_point)
 
-                        added.append([sub["level"],nav_point])
+                        added.append([sub["level"], nav_point])
 
             return nav_map.tohtml()
 
         return _make_navmap(toc_tree)
 
-    def make_TOC(self,vim,epub2=True,epub3=True):
+    def make_TOC(self, vim, epub2=True, epub3=True):
         """
         Make  the  *internal*  Table  Of Contents,  not  a  Table  Of
         Contents page.
@@ -924,17 +986,17 @@ class EPUB:
 
         if make:
             if epub2:
-                self.epub2_make_ncx(vim,toc_tree)
+                self.epub2_make_ncx(vim, toc_tree)
 
             if epub3:
-                self.make_nav(vim,toc_tree)
+                self.make_nav(vim, toc_tree)
 
             return True
         else:
             # Seriously…
             return False
 
-    def epub2_make_ncx(self,vim,toc_tree):
+    def epub2_make_ncx(self, vim, toc_tree):
         ncx = self.get_files_by_extension("ncx")
 
         output_file = False
@@ -953,14 +1015,15 @@ class EPUB:
             new = True
 
         if output_file:
-            output_file = "{0}{1}".format(self.temporary_epub["path"],output_file)
+            output_file = "{0}{1}".format(self.temporary_epub["path"],
+                                          output_file)
 
             # NCX "header" + <navMap>
             if new:
-                header = get_skel(vim,"ncx_head")
+                header = get_skel(vim, "ncx_head")
             else:
                 header = ""
-                with open(output_file,"r") as ncx:
+                with open(output_file, "r") as ncx:
                     record = True
 
                     for line in ncx:
@@ -974,25 +1037,25 @@ class EPUB:
             navpoints = self._make_ncx(toc_tree)
 
             # NCX "footer"
-            footer = get_skel(vim,"ncx_tail")
+            footer = get_skel(vim, "ncx_tail")
 
             # Write all to output_file
 
             if not new:
                 os.remove(output_file)
 
-            with open(output_file,"w") as ncx:
-                for section in [header,navpoints,footer]:
+            with open(output_file, "w") as ncx:
+                for section in [header, navpoints, footer]:
                     ncx.write(section)
 
-    def make_nav(self,vim,toc_tree):
+    def make_nav(self, vim, toc_tree):
         nav = False
 
-        for fname in ["toc.html","toc.xhtml","nav.html","nav.xhtml"]:
+        for fname in ["toc.html", "toc.xhtml", "nav.html", "nav.xhtml"]:
             fname = path(fname)
 
             if self.has_file(fname):
-                nav = self.get_file(fname,True)
+                nav = self.get_file(fname, True)
                 break
 
         output_file = False
@@ -1001,18 +1064,21 @@ class EPUB:
             new = False
         else:
             if self.oebps["used"]:
-                output_file = "{0}{1}{2}{3}".format(self.temporary_epub["path"],self.oebps["variant"],os.sep,"nav.html")
+                output_file = "{0}{1}{2}{3}".format(
+                    self.temporary_epub["path"], self.oebps["variant"], os.sep,
+                    "nav.html")
             else:
-                output_file = "{0}{1}".format(self.temporary_epub["path"],"nav.html")
+                output_file = "{0}{1}".format(self.temporary_epub["path"],
+                                              "nav.html")
             new = True
 
         if output_file:
             # NAV "header" + <navMap>
             if new:
-                header = get_skel(vim,"nav_head")
+                header = get_skel(vim, "nav_head")
             else:
                 header = ""
-                with open(output_file,"r") as ncx:
+                with open(output_file, "r") as ncx:
                     record = True
 
                     for line in ncx:
@@ -1026,77 +1092,69 @@ class EPUB:
             navpoints = self._make_nav(toc_tree)
 
             # NAV "footer"
-            footer = get_skel(vim,"nav_tail")
+            footer = get_skel(vim, "nav_tail")
 
             # Write all to output_file
 
-            print output_file
+            print(output_file)
 
             if not new:
                 os.remove(output_file)
 
-            with open(output_file,"w") as nav:
-                for section in [header,navpoints,footer]:
+            with open(output_file, "w") as nav:
+                for section in [header, navpoints, footer]:
                     nav.write(section)
 
-    def make_TOC_page(self,vim,toc_tree):
+    def make_TOC_page(self, vim, toc_tree):
         """
         Make a table  of contents page (xhtml) according  to the tree
         generated by make_TOC_tree.
         """
 
-        location,make_dir = self.guess_destination("text")
+        location, make_dir = self.guess_destination("text")
 
         text_dir = None
 
         if location == "{0}/Text/".format(self.oebps["variant"]):
-            text_dir = "{0}/{1}/Text/".format(
-                    self.temporary_epub["path"],
-                    self.oebps["variant"]
-            )
+            text_dir = "{0}/{1}/Text/".format(self.temporary_epub["path"],
+                                              self.oebps["variant"])
 
         if text_dir is not None:
-            with open("{0}TableOfContents.xhtml".format(text_dir),"w") as tocf:
-                tocf.write(get_skel(vim,"xhtml_head"))
+            with open("{0}TableOfContents.xhtml".format(text_dir),
+                      "w") as tocf:
+                tocf.write(get_skel(vim, "xhtml_head"))
 
                 for elem in toc_tree:
-                    if elem["level"] in [1,2]:
+                    if elem["level"] in [1, 2]:
                         tocf.write('\n')
 
-                    tocf.write(
-                            '<p class="tlevel_{0}">{1}</p>\n'.format(
-                                elem["level"],
-                                elem["text"]
-                            )
-                    )
+                    tocf.write('<p class="tlevel_{0}">{1}</p>\n'.format(
+                        elem["level"], elem["text"]))
 
                     if elem["subtitles"]:
                         for e in elem["subtitles"]:
                             tocf.write(
-                                    '<p class="tlevel_{0}">{1}</p>\n'.format(
-                                        e["level"],
-                                        e["text"]
-                                    )
-                            )
+                                '<p class="tlevel_{0}">{1}</p>\n'.format(
+                                    e["level"], e["text"]))
 
-                tocf.write(get_skel(vim,"xhtml_tail"))
+                tocf.write(get_skel(vim, "xhtml_tail"))
 
                 return True
 
     # Other methods
 
-    def open_file(self,vim,media_name):
+    def open_file(self, vim, media_name):
         """Open a file with an external program"""
 
         extensions = {
-                "font":["ttf","otf","woff"],
-                "image":["png","jpeg","jpg","gif"]
+            "font": ["ttf", "otf", "woff"],
+            "image": ["png", "jpeg", "jpg", "gif"]
         }
 
         type_defined = False
 
         for media_type in extensions.items():
-            mt,exts = media_type[0],media_type[1]
+            mt, exts = media_type[0], media_type[1]
 
             for ext in exts:
                 lmn = media_name.lower()
@@ -1109,55 +1167,46 @@ class EPUB:
                 break
 
         if type_defined == "font":
-            custom_command = vimvar(vim,"VimEPUB_OpenMedia_Font")
+            custom_command = vimvar(vim, "VimEPUB_OpenMedia_Font")
         elif type_defined == "image":
-            custom_command = vimvar(vim,"VimEPUB_OpenMedia_Image")
+            custom_command = vimvar(vim, "VimEPUB_OpenMedia_Image")
         else:
             custom_command = False
 
-        mfile = "{0}{1}".format(self.temporary_epub["path"],media_name)
+        mfile = "{0}{1}".format(self.temporary_epub["path"], media_name)
 
         if custom_command:
             if custom_command.lower() == "none":
                 custom_command = False
 
-            if platform.system() == "Linux" or "bsd" in platform.system().lower():
+            if platform.system() == "Linux" or "bsd" in platform.system(
+            ).lower():
                 if custom_command:
-                    os.popen(
-                            '{0} "{1}" > /dev/null'.format(
-                                custom_command,
-                                mfile
-                            )
-                    ).read()
+                    os.popen('{0} "{1}" > /dev/null'.format(
+                        custom_command, mfile)).read()
                 else:
-                    os.popen(
-                            'xdg-open "{0}" > /dev/null'.format(mfile)
-                    ).read()
+                    os.popen('xdg-open "{0}" > /dev/null'.format(mfile)).read()
 
-                return True,mfile
+                return True, mfile
 
             elif platform.system() == "Darwin":
                 if custom_command:
-                    os.system(
-                            'open -a "{0}" {1}'.format(
-                                custom_command,
-                                mfile
-                            )
-                    )
+                    os.system('open -a "{0}" {1}'.format(
+                        custom_command, mfile))
                 else:
                     os.system('open {0}'.format(mfile))
 
-                return True,mfile
+                return True, mfile
 
             elif platform.system() == "Windows":
-                return False,mfile
+                return False, mfile
 
             else:
-                return False,mfile
+                return False, mfile
         else:
-            return False,mfile
+            return False, mfile
 
-    def open_reader(self,vim):
+    def open_reader(self, vim):
         """Open the EPUB reader defined by the OS"""
 
         custom_command = vim.eval("g:VimEPUB_EReaderCommand")
@@ -1168,27 +1217,16 @@ class EPUB:
 
         if platform.system() == "Linux" or "bsd" in platform.system().lower():
             if custom_command:
-                os.popen(
-                        '{0} "{1}"'.format(
-                            custom_command,
-                            epub_path
-                        )
-                ).read()
+                os.popen('{0} "{1}"'.format(custom_command, epub_path)).read()
             else:
-                os.popen(
-                        'xdg-open "{0}"'.format(epub_path)
-                ).read()
+                os.popen('xdg-open "{0}"'.format(epub_path)).read()
 
             return True
 
         elif platform.system() == "Darwin":
             if custom_command:
-                os.system(
-                        'open -a "{0}" {1}'.format(
-                            custom_command,
-                            epub_path
-                        )
-                )
+                os.system('open -a "{0}" {1}'.format(custom_command,
+                                                     epub_path))
             else:
                 os.system('open {0}'.format(epub_path))
 
@@ -1200,7 +1238,7 @@ class EPUB:
         else:
             return False
 
-    def open_diff(self,vim,epub2):
+    def open_diff(self, vim, epub2):
         """
         Use epubdiff to  produce a diff between current  EPUB and the
         EPUB  with  epub2  filepath  and  open a  vim  split  to show
@@ -1213,23 +1251,21 @@ class EPUB:
             # Try to remove the diff file if it already exists
             try:
                 os.remove(".vepub.diff")
-            except OSError,err:
+            except OSError, err:
                 if err.errno == 2:
                     pass
 
             # Make the diff
-            checker = epubdiff.EpubDiff(
-                    self.original_epub["path"].realpath(),
-                    epub2.realpath()
-                    )
+            checker = epubdiff.EpubDiff(self.original_epub["path"].realpath(),
+                                        epub2.realpath())
             checker.check()
 
             # Writes it in a file
-            with open(".vepub.diff","w") as df:
+            with open(".vepub.diff", "w") as df:
                 first = True
                 for diff_elem in checker.difflog:
                     for dde in diff_elem:
-                        if isinstance(dde,tuple):
+                        if isinstance(dde, tuple):
                             if first:
                                 df.write("{0}: ".format(dde[1]))
                                 first = False
@@ -1241,20 +1277,20 @@ class EPUB:
 
             # Open the  diff in the correct split and  make the split
             # buffer disappear of buffers list if closed.
-            vim.command(":{0} .vepub.diff".format(get_split_cmd(vim,"diff")))
+            vim.command(":{0} .vepub.diff".format(get_split_cmd(vim, "diff")))
             vim.command(":setl buftype=nofile bufhidden=wipe nobuflisted")
 
             return True
         else:
             return False
 
+
 #===============================================================================
-
-
 
 #=== Functions =================================================================
 
 # Functions to manage this shitty unicode/str compat.
+
 
 def to_unicode_or_bust(obj, encoding='utf-8'):
     """By Kumar McMillan"""
@@ -1264,22 +1300,25 @@ def to_unicode_or_bust(obj, encoding='utf-8'):
             obj = unicode(obj, encoding)
     return obj
 
-def desunicode(s): return s.encode("utf8")
 
-def merge_html(file_1,file_2,output_file):
+def desunicode(s):
+    return s.encode("utf8")
+
+
+def merge_html(file_1, file_2, output_file):
     """Merge file_1 and file_2 into output_file"""
 
     try:
         output_file = path(output_file)
         os.remove(output_file.realpath())
-    except OSError,err:
+    except OSError, err:
         if err.errno == 2:
             pass
 
-    file_1,file_1_contents = path(file_1),""
-    file_2,file_2_contents = path(file_2),""
+    file_1, file_1_contents = path(file_1), ""
+    file_2, file_2_contents = path(file_2), ""
 
-    with open(file_1.realpath(),"r") as fi:
+    with open(file_1.realpath(), "r") as fi:
         record = True
 
         for line in fi:
@@ -1289,7 +1328,7 @@ def merge_html(file_1,file_2,output_file):
                 else:
                     file_1_contents += line
 
-    with open(file_2.realpath(),"r") as fi:
+    with open(file_2.realpath(), "r") as fi:
         record = False
 
         for line in fi:
@@ -1299,16 +1338,18 @@ def merge_html(file_1,file_2,output_file):
                 if line.strip() == "<body>":
                     record = True
 
-    with open(output_file.realpath(),"w") as fi:
+    with open(output_file.realpath(), "w") as fi:
         fi.write(file_1_contents)
         fi.write("\n")
         fi.write(file_2_contents)
 
     return True
 
+
 # Python/Vim utilities
 
-def refresh(vim,msg=False,msg_echom=False):
+
+def refresh(vim, msg=False, msg_echom=False):
     """
     Refresh the Vim buffers and show a message.
 
@@ -1320,13 +1361,14 @@ def refresh(vim,msg=False,msg_echom=False):
 
     if msg:
         if msg_echom:
-            echom(vim,msg)
+            echom(vim, msg)
         else:
-            print msg
+            print(msg)
 
     vim.command(":edit")
 
-def normal(vim,keys,silent=True,end_in_normal_mode=False):
+
+def normal(vim, keys, silent=True, end_in_normal_mode=False):
     """
     Do normal mode moves/commands.
 
@@ -1346,7 +1388,8 @@ def normal(vim,keys,silent=True,end_in_normal_mode=False):
 
     vim.command(normal_maps)
 
-def cat_in_buffer(vim,filepath,silent=True):
+
+def cat_in_buffer(vim, filepath, silent=True):
     """Cat/Dump a file into the current buffer"""
 
     if silent:
@@ -1354,13 +1397,15 @@ def cat_in_buffer(vim,filepath,silent=True):
     else:
         vim.command(':r !cat "{0}"'.format(filepath))
 
+
 def get_current_line(vim):
     """Shorcut function to get vim current buffer's current line"""
 
     try:
-        return vim.current.buffer[vim.current.window.cursor[0]-1]
+        return vim.current.buffer[vim.current.window.cursor[0] - 1]
     except IndexError:
         return False
+
 
 def get_next_line(vim):
     """
@@ -1373,11 +1418,12 @@ def get_next_line(vim):
     except IndexError:
         return False
 
-def get_user_input(vim,prompt,erase=True):
+
+def get_user_input(vim, prompt, erase=True):
     """Use g:VimEPUB_Prompt as a variable to get user input"""
 
     vim.command('let g:VimEPUB_Prompt = input("{0} ")'.format(prompt))
-    print " "
+    print(" ")
 
     uinput = to_unicode_or_bust(vim.eval("g:VimEPUB_Prompt"))
 
@@ -1386,11 +1432,13 @@ def get_user_input(vim,prompt,erase=True):
 
     return uinput
 
-def echom(vim,message):
+
+def echom(vim, message):
     """Shorcut function for :echom"""
     vim.command("""echom '{0}'""".format(message))
 
-def get_split_cmd(vim,target):
+
+def get_split_cmd(vim, target):
     """Get the Vim-EPUB option to make the correct split."""
 
     if target == "diff":
@@ -1411,7 +1459,7 @@ def get_split_cmd(vim,target):
     else:
         return "sp"
 
-    if split.lower() in ["sp","vsp"]:
+    if split.lower() in ["sp", "vsp"]:
         return split.lower()
 
     if split.lower() == "horizontal":
@@ -1420,6 +1468,7 @@ def get_split_cmd(vim,target):
         return "vsp"
     else:
         return "sp"
+
 
 def get_epub_version(vim):
     epub_versions = vim.eval("g:VimEPUB_EPUB_Version")
@@ -1446,7 +1495,8 @@ def get_epub_version(vim):
     else:
         return "epub3"
 
-def get_skel(vim,skel_name,get_filepath=False):
+
+def get_skel(vim, skel_name, get_filepath=False):
     """
     Get code  snippets/skeletons in  the correct filepath  and return
     its text, or its filepath (if get_filepath set to True).
@@ -1459,7 +1509,7 @@ def get_skel(vim,skel_name,get_filepath=False):
     plugin_dir = vim.eval("g:VimEPUB_PluginPath")
 
     if skels_dir.lower() == "none":
-        skels_dir = path("{0}{1}skels{1}".format(plugin_dir,os.sep))
+        skels_dir = path("{0}{1}skels{1}".format(plugin_dir, os.sep))
     else:
         skels_dir = path(skels_dir).realpath()
 
@@ -1476,13 +1526,15 @@ def get_skel(vim,skel_name,get_filepath=False):
         if get_filepath:
             return skel
         else:
-            with open(skel,"r") as sf:
+            with open(skel, "r") as sf:
                 return sf.read()
 
-def vimvar(vim,variable):
+
+def vimvar(vim, variable):
     return vim.eval("g:{0}".format(variable))
 
-def epub_contents_buffer(vim,epub):
+
+def epub_contents_buffer(vim, epub):
     """Navigate throught Vim buffers to get epub content buffer"""
 
     buffers = []
@@ -1504,22 +1556,20 @@ def epub_contents_buffer(vim,epub):
         else:
             if bn == epub.contents_buffer:
                 contents_buffer = True
-                print "Finded"
+                print("Finded")
 
-def make_new_epub(vim,filename):
+
+def make_new_epub(vim, filename):
     """
     Make   a   new    epub   file   from   a    template   based   on
     g:VimEPUB_EPUB_Version value.
     """
 
-    def copy(template,filename):
-        new_file = "{0}{1}{2}.epub".format(
-                os.path.realpath(os.curdir),
-                os.sep,
-                filename
-        )
+    def copy(template, filename):
+        new_file = "{0}{1}{2}.epub".format(os.path.realpath(os.curdir), os.sep,
+                                           filename)
 
-        shutil.copy(template,new_file)
+        shutil.copy(template, new_file)
 
         return new_file
 
@@ -1527,27 +1577,21 @@ def make_new_epub(vim,filename):
 
     do = True
 
-    template = get_skel(
-            vim,
-            "epub_{0}".format(epub_version),
-            get_filepath=True
-    )
+    template = get_skel(vim,
+                        "epub_{0}".format(epub_version),
+                        get_filepath=True)
 
     if template:
-        return copy(template,filename)
+        return copy(template, filename)
 
     else:
-        for version in ["epub3","epub2","compatibility"]:
-            temp = get_skel(
-                    vim,
-                    "epub_{0}".format(version),
-                    get_filepath=True
-            )
+        for version in ["epub3", "epub2", "compatibility"]:
+            temp = get_skel(vim, "epub_{0}".format(version), get_filepath=True)
 
             if temp: break
 
         if temp:
-            return copy(temp,filename)
+            return copy(temp, filename)
 
         else:
             return False
