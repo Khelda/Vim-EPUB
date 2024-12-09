@@ -6,7 +6,7 @@
 # Released under GNU GPL version 3
 # By Etienne Nadji <etnadji@eml.cc>
 
-
+from __future__ import unicode_literals
 
 import os
 
@@ -20,7 +20,7 @@ def make_fontdef_summary(font_name,sources,output_file):
                 output_file
         )
 
-        print(output_file)
+        print output_file
 
         for ops in ["OEBPS","OPS"]:
             if font_name.startswith(ops):

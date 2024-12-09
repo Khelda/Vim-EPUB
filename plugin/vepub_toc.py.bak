@@ -6,9 +6,9 @@
 # Released under GNU GPL version 3
 # By Etienne Nadji <etnadji@eml.cc>
 
+from __future__ import unicode_literals
 
-
-from html.parser import HTMLParser
+from HTMLParser import HTMLParser
 
 class TocParser(HTMLParser):
     """Parse HTML to get <hX> tags"""

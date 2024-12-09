@@ -10,7 +10,7 @@
 
 #--- builtin -------------------------------------
 
-
+from __future__ import unicode_literals
 
 import os
 import platform
@@ -169,7 +169,7 @@ class EPUB:
                 # The folder already exists
                 self.temporary_epub["have_dir"] = True
             else:
-                print((err.errno, ":", err.strerror))
+                print(err.errno, ":", err.strerror)
 
         self.temporary_epub["path"] = tmp_path
 
@@ -301,7 +301,7 @@ class EPUB:
             elif media_path.ext[1:].lower() in ["mp3", "mp4", "ogg"]:
                 media_type = "audio"
             else:
-                print(("Unknown format:", media_path.ext[1:]))
+                print("Unknown format:", media_path.ext[1:])
                 media_type = "misc"
 
             # Find the appropriate folder in the EPUB file for the new media.
@@ -357,7 +357,7 @@ class EPUB:
         if backup_file:
             self.original_epub["path"].copy(backup_file)
 
-            print(("EPUB Backup in {0}.".format(backup_file)))
+            print("EPUB Backup in {0}.".format(backup_file))
 
             return True
         else:
@@ -371,7 +371,7 @@ class EPUB:
 
             if platform.system() in ["Linux", "Darwin"
                                      ] or "bsd" in platform.system().lower():
-                nzip = str(self.original_epub["path"].basename())
+                nzip = unicode(self.original_epub["path"].basename())
             else:
                 # Windows…
                 return False
@@ -457,7 +457,7 @@ class EPUB:
 
                     with open(file_path, "w") as fi:
                         fi.write(new_text)
-                except IOError as err:
+                except IOError, err:
                     if err.errno == 2:
                         pass
 
@@ -1153,7 +1153,7 @@ class EPUB:
 
         type_defined = False
 
-        for media_type in list(extensions.items()):
+        for media_type in extensions.items():
             mt, exts = media_type[0], media_type[1]
 
             for ext in exts:
@@ -1213,7 +1213,7 @@ class EPUB:
         if custom_command.lower() == "none":
             custom_command = False
 
-        epub_path = str(self.original_epub["path"])
+        epub_path = unicode(self.original_epub["path"])
 
         if platform.system() == "Linux" or "bsd" in platform.system().lower():
             if custom_command:
@@ -1251,7 +1251,7 @@ class EPUB:
             # Try to remove the diff file if it already exists
             try:
                 os.remove(".vepub.diff")
-            except OSError as err:
+            except OSError, err:
                 if err.errno == 2:
                     pass
 
@@ -1295,9 +1295,9 @@ class EPUB:
 def to_unicode_or_bust(obj, encoding='utf-8'):
     """By Kumar McMillan"""
 
-    if isinstance(obj, str):
-        if not isinstance(obj, str):
-            obj = str(obj, encoding)
+    if isinstance(obj, basestring):
+        if not isinstance(obj, unicode):
+            obj = unicode(obj, encoding)
     return obj
 
 
@@ -1311,7 +1311,7 @@ def merge_html(file_1, file_2, output_file):
     try:
         output_file = path(output_file)
         os.remove(output_file.realpath())
-    except OSError as err:
+    except OSError, err:
         if err.errno == 2:
             pass
 
@@ -1545,7 +1545,7 @@ def epub_contents_buffer(vim, epub):
         buffers.append(vim.current.buffer.name.decode("utf8"))
         try:
             vim.command(":bn")
-        except vim.error as error:
+        except vim.error, error:
             if error == 85:
                 contents_buffer = True
 

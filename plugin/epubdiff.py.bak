@@ -21,8 +21,8 @@ class EpubDiff (object):
 
     def __init__(self, original, modified):
 
-        self.TEXTCHARS = ''.join(map(chr, [7,8,9,10,12,13,27] + list(range(0x20, 0x100))))
-        self.ALLBYTES = ''.join(map(chr, list(range(256))))
+        self.TEXTCHARS = ''.join(map(chr, [7,8,9,10,12,13,27] + range(0x20, 0x100)))
+        self.ALLBYTES = ''.join(map(chr, range(256)))
 
         self.changelist = [
             (0, 'No Change'),
@@ -57,14 +57,14 @@ class EpubDiff (object):
     def buildmanifest(self):
         for document, docID in self.doclist:
             for item in document.namelist():
-                if item in list(self.manifest.keys()):
+                if item in self.manifest.keys():
                     self.manifest[item][docID] = True
                 else:
                     self.manifest[item] = [False, False, False, False]
                     self.manifest[item][docID] = True
 
     def checkbinary(self):
-        for path, info in self.manifest.items():
+        for path, info in self.manifest.iteritems():
             if info[0]:
                 o_binary = bool(self.original.read(path).translate(self.ALLBYTES, self.TEXTCHARS))
                 self.manifest[path][2] = o_binary
@@ -74,7 +74,7 @@ class EpubDiff (object):
 
 
     def getchecksums(self):
-        for path, info in self.manifest.items():
+        for path, info in self.manifest.iteritems():
             if info[0] and info[1]:
                 o_md5 = hashlib.new('md5')
                 m_md5 = hashlib.new('md5')
@@ -88,20 +88,20 @@ class EpubDiff (object):
                 del o_md5, m_md5
 
     def checkdiff (self):
-        for path, info in self.manifest.items():
+        for path, info in self.manifest.iteritems():
             if info[0] and info[1]:
                 self.manifest[path].append(False)
                 if not info[4] == info[5]:
                     self.manifest[path][6] = True
 
     def getdiff(self):
-        for path, info in self.manifest.items():
+        for path, info in self.manifest.iteritems():
             if info[0] and info[1] and (not info[2]) and (not info[3]) and info[6]:
                 diff = difflib.unified_diff(self.original.read(path).splitlines(), self.modified.read(path).splitlines())
                 self.manifest[path].append('\n'.join(list(diff)))
 
     def builddifflog(self):
-        for path, info in self.manifest.items():
+        for path, info in self.manifest.iteritems():
             if not info[1]:
                 self.difflog.append((self.changelist[1], path))
 

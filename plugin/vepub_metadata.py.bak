@@ -6,7 +6,7 @@
 # Released under GNU GPL version 3
 # By Etienne Nadji <etnadji@eml.cc>
 
-
+from __future__ import unicode_literals
 
 import os
 
@@ -235,7 +235,7 @@ def read_OPF(opf_file):
 
         metadatas = []
 
-        for md in list(raw_tags.items()):
+        for md in raw_tags.items():
             if md[0] in formaters:
                 metadatas.append(formaters[md[0]](md[1]))
             else:
@@ -246,7 +246,7 @@ def read_OPF(opf_file):
 def make_OPF_summary(metadatas,output_file,grouped=False):
     try:
         os.remove(os.path.realpath(output_file))
-    except OSError as err:
+    except OSError,err:
         if err.errno == 2:
             pass
 
@@ -267,7 +267,7 @@ def make_OPF_summary(metadatas,output_file,grouped=False):
                     else:
                         groups[md.group] = [md]
 
-            for group in list(groups.items()):
+            for group in groups.items():
                 if group[0] == "none":
                     for elem in group[1]:
                         out.write(

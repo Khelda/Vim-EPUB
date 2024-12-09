@@ -6,7 +6,7 @@
 # Released under GNU GPL version 3
 # By Etienne Nadji <etnadji@eml.cc>
 
-
+from __future__ import unicode_literals
 
 class Nav():
     """<nav> element of EPUB3 toc/nav.html file"""
